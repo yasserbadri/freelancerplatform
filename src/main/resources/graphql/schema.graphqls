@@ -1,0 +1,67 @@
+scalar DateTime
+
+type Query {
+    freelances: [Freelance]
+    freelanceById(id: ID!): Freelance
+    skills: [Skill]
+    liens: [LienProfessionnel]
+    getProject(id: ID!): Project
+    hello: String
+}
+
+type Mutation {
+    createFreelance(input: FreelanceInput!): Freelance
+    updateFreelance(id: ID!, input: FreelanceInput!): Freelance
+    deleteFreelance(id: ID!): Boolean
+
+    createSkill(input: SkillInput): Skill
+    deleteSkill(id: ID!): Boolean
+
+    createLien(input: LienInput): LienProfessionnel
+    deleteLien(id: ID!): Boolean
+}
+
+type Freelance {
+    id: ID
+    nom: String
+    prenom: String
+    email: String
+    bio: String
+    skills: [Skill]
+    liens: [LienProfessionnel]
+}
+
+type Skill {
+    id: ID!
+    nom: String!
+}
+
+type LienProfessionnel {
+    id: ID
+    type: String
+    url: String
+}
+
+type Project {
+    id: ID!
+    name: String!
+    startDate: DateTime!
+}
+
+input FreelanceInput {
+    nom: String
+    prenom: String
+    email: String
+    bio: String
+    skills: [SkillInput!]
+    liens: [LienInput!]
+}
+
+input SkillInput {
+    nom: String!
+}
+
+input LienInput {
+    type: String!
+    url: String!
+}

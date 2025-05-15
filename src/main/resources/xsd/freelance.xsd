@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        targetNamespace="http://example.com/freelance"
+        xmlns:tns="http://example.com/freelance"
+        elementFormDefault="qualified">
+
+    <!-- Définition de l'entité Freelance -->
+    <xs:complexType name="Freelance">
+        <xs:sequence>
+            <xs:element name="id" type="xs:long"/>
+            <xs:element name="nom" type="xs:string"/>
+            <xs:element name="prenom" type="xs:string"/>
+            <xs:element name="email" type="xs:string"/>
+            <xs:element name="bio" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Requête pour obtenir tous les freelances -->
+    <xs:element name="GetAllFreelancesRequest">
+        <xs:complexType>
+            <xs:sequence/>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Réponse contenant la liste des freelances -->
+    <xs:element name="GetAllFreelancesResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="freelances" type="tns:Freelance" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>

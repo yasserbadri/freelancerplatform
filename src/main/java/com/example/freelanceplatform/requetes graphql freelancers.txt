@@ -1,0 +1,118 @@
+Créer un lien professionnel
+mutation {
+  createLien(input: {
+    type: "Portfolio",
+    url: "https://portfolio.jdupont.com"
+  }) {
+    id
+    type
+    url
+  }
+}
+
+mutation {
+  deleteLien(id: 1)
+}
+
+mutation {
+  deleteSkill(id: 1)
+}
+mutation {
+  createSkill(input: {
+    nom: "GraphQL"
+  }) {
+    id
+    nom
+  }
+}
+
+mutation {
+  deleteFreelance(id: 1)
+}
+
+mutation {
+  updateFreelance(id: 1, input: {
+    nom: "Dupont",
+    prenom: "Jean-Paul",
+    email: "jeanpaul.dupont@example.com",
+    bio: "Développeur fullstack expérimenté"
+  }) {
+    id
+    nom
+    prenom
+    email
+    bio
+  }
+}
+
+mutation {
+  createFreelance(input: {
+    nom: "Dupont",
+    prenom: "Jean",
+    email: "jean.dupont@example.com",
+    bio: "Développeur fullstack",
+    skills: [
+      {nom: "Java"},
+      {nom: "Spring Boot"}
+    ],
+    liens: [
+      {type: "GitHub", url: "https://github.com/jdupont"},
+      {type: "LinkedIn", url: "https://linkedin.com/in/jdupont"}
+    ]
+  }) {
+    id
+    nom
+    prenom
+  }
+}
+
+query {
+  getProject(id: 1) {
+    id
+    name
+    startDate
+  }
+}
+
+query {
+  liens {
+    id
+    type
+    url
+  }
+}
+
+query {
+  skills {
+    id
+    nom
+  }
+}
+
+query {
+  freelances {
+    id
+    nom
+    skills {
+      id
+      nom
+    }
+    liens {
+      id
+      type
+    }
+  }
+}
+
+mutation {
+  createFreelance(input: {
+    nom: "Test",
+    prenom: "User",
+    email: "test@example.com",
+    bio: "Bio de test",
+    skills: [{nom: "Java"}],
+    liens: [{type: "GitHub", url: "https://github.com/test"}]
+  }) {
+    id
+  }
+}

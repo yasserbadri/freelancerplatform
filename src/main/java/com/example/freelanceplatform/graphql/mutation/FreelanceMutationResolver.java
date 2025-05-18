@@ -1,17 +1,13 @@
 package com.example.freelanceplatform.graphql.mutation;
 
-import com.example.freelanceplatform.graphql.input.FreelanceInput;
-import com.example.freelanceplatform.graphql.input.LienInput;
-import com.example.freelanceplatform.graphql.input.SkillInput;
-import com.example.freelanceplatform.model.Freelance;
-import com.example.freelanceplatform.model.LienProfessionnel;
-import com.example.freelanceplatform.model.Skill;
-import com.example.freelanceplatform.repository.FreelanceRepository;
-import com.example.freelanceplatform.repository.LienProfessionnelRepository;
-import com.example.freelanceplatform.repository.SkillRepository;
+import com.example.freelanceplatform.graphql.input.*;
+import com.example.freelanceplatform.model.*;
+import com.example.freelanceplatform.repository.*;
 import graphql.kickstart.tools.GraphQLMutationResolver;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,12 +18,21 @@ public class FreelanceMutationResolver implements GraphQLMutationResolver {
     private final SkillRepository skillRepository;
     private final FreelanceRepository freelanceRepository;
     private final LienProfessionnelRepository lienProfessionnelRepository;
+    private final ProjectRepository projectRepository;
+    private final ProposalRepository proposalRepository;
+    private final PaymentRepository paymentRepository;
+    private final ReviewRepository reviewRepository;
+    private final UserRepository userRepository;
 
-
-    public FreelanceMutationResolver(SkillRepository skillRepository, FreelanceRepository freelanceRepository,LienProfessionnelRepository lienProfessionnelRepository) {
+    public FreelanceMutationResolver(SkillRepository skillRepository, FreelanceRepository freelanceRepository,LienProfessionnelRepository lienProfessionnelRepository ,ProjectRepository projectRepository,ProposalRepository proposalRepository, PaymentRepository paymentRepository , ReviewRepository reviewRepository , UserRepository userRepository) {
         this.skillRepository = skillRepository;
         this.freelanceRepository = freelanceRepository;
         this.lienProfessionnelRepository=lienProfessionnelRepository;
+        this.paymentRepository=paymentRepository;
+        this.userRepository=userRepository;
+        this.reviewRepository=reviewRepository;
+        this.projectRepository=projectRepository;
+        this.proposalRepository=proposalRepository;
     }
     public Freelance createFreelance(FreelanceInput input) {
         // D'abord créer le freelance sans les associations
@@ -147,4 +152,128 @@ public class FreelanceMutationResolver implements GraphQLMutationResolver {
         }
         return false;
     }
+
+
+    public Project createProject(ProjectInput input) {
+        User client = userRepository.findById(input.getClientId())
+                .orElseThrow(() -> new RuntimeException("Client non trouvé"));
+
+        Project project = new Project();
+        project.setName(input.getName());
+        project.setDescription(input.getDescription());
+        project.setBudget(input.getBudget());
+        project.setClient(client);
+        project.setStatus(ProjectStatus.NEW);
+        project.setStartDate(LocalDateTime.now());
+
+        return projectRepository.save(project);
+    }
+
+    public Proposal submitProposal(ProposalInput input) {
+        Project project = projectRepository.findById(input.getProjectId())
+                .orElseThrow(() -> new RuntimeException("Projet non trouvé"));
+        Freelance freelance = freelanceRepository.findById(input.getFreelanceId())
+                .orElseThrow(() -> new RuntimeException("Freelance non trouvé"));
+
+        Proposal proposal = new Proposal();
+        proposal.setMessage(input.getMessage());
+        proposal.setBidAmount(input.getBidAmount());
+        proposal.setStatus(ProposalStatus.PENDING);
+        proposal.setProject(project);
+        proposal.setFreelance(freelance);
+
+        return proposalRepository.save(proposal);
+    }
+
+    /*public Proposal acceptProposal(Long id) {
+        Proposal proposal = proposalRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Proposition non trouvée"));
+
+        proposal.setStatus(ProposalStatus.ACCEPTED);
+        proposal.getProject().setStatus(ProjectStatus.IN_PROGRESS);
+
+        projectRepository.save(proposal.getProject());
+        return proposalRepository.save(proposal);
+    }*/
+
+    @Transactional // Ajoutez cette annotation pour gérer les transactions
+    public Proposal acceptProposal(Long id) {
+        // Charge la proposition AVEC le projet et le freelance
+        Proposal proposal = proposalRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Proposition non trouvée"));
+
+        // Charge explicitement le projet si nécessaire (solution alternative)
+        Project project = projectRepository.findById(proposal.getProject().getId())
+                .orElseThrow(() -> new RuntimeException("Projet associé non trouvé"));
+
+        // Vérification de l'état actuel
+        if (proposal.getStatus() == ProposalStatus.ACCEPTED) {
+            throw new RuntimeException("Cette proposition est déjà acceptée");
+        }
+
+        // Met à jour les statuts
+        proposal.setStatus(ProposalStatus.ACCEPTED);
+        project.setStatus(ProjectStatus.IN_PROGRESS);
+
+        // Sauvegarde en cascade
+        projectRepository.save(project); // Sauvegarde d'abord le projet
+        return proposalRepository.save(proposal);
+    }
+
+    public Review createReview(ReviewInput input) {
+        Project project = projectRepository.findById(input.getProjectId())
+                .orElseThrow(() -> new RuntimeException("Projet non trouvé"));
+        Freelance freelance = freelanceRepository.findById(input.getFreelanceId())
+                .orElseThrow(() -> new RuntimeException("Freelance non trouvé"));
+
+        Review review = new Review();
+        review.setRating(input.getRating());
+        review.setComment(input.getComment());
+        review.setProject(project);
+        review.setFreelance(freelance);
+
+        return reviewRepository.save(review);
+    }
+
+    public Payment createPayment(PaymentInput input) {
+        Project project = projectRepository.findById(input.getProjectId())
+                .orElseThrow(() -> new RuntimeException("Projet non trouvé"));
+
+        Payment payment = new Payment();
+        payment.setAmount(input.getAmount());
+        payment.setStatus(PaymentStatus.PENDING);
+        payment.setProject(project);
+        payment.setPaymentDate(LocalDateTime.now());
+
+        return paymentRepository.save(payment);
+    }
+
+    public User createUser(UserInput input) {
+        if (userRepository.existsByUsername(input.getUsername())) {
+            throw new RuntimeException("Nom d'utilisateur déjà utilisé");
+        }
+
+        User user = new User();
+        user.setUsername(input.getUsername());
+        user.setPassword(input.getPassword()); // Devrait être hashé en réalité
+        user.setRole(input.getRole());
+
+        User savedUser = userRepository.save(user);
+
+        // Si c'est un freelance, créer le profil associé
+        if (input.getFreelanceProfile() != null && "FREELANCER".equals(input.getRole())) {
+            FreelanceInput freelanceInput = input.getFreelanceProfile();
+            Freelance freelance = new Freelance();
+            freelance.setNom(freelanceInput.getNom());
+            freelance.setPrenom(freelanceInput.getPrenom());
+            freelance.setEmail(freelanceInput.getEmail());
+            freelance.setBio(freelanceInput.getBio());
+            freelance.setUser(savedUser);
+
+            freelanceRepository.save(freelance);
+        }
+
+        return savedUser;
+    }
+
 }

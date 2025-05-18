@@ -7,6 +7,15 @@ type Query {
     liens: [LienProfessionnel]
     getProject(id: ID!): Project
     hello: String
+    projectsByClient(clientId: ID!): [Project]
+    availableProjects: [Project]
+    proposalsByFreelance(freelanceId: ID!): [Proposal]
+    freelanceReviews(freelanceId: ID!): [Review]
+    freelanceAverageRating(freelanceId: ID!): Float
+    projectPayments(projectId: ID!): [Payment]
+    allFreelancers: [User]
+    allClients: [User]
+    userById(id: ID!): User
 }
 
 type Mutation {
@@ -19,6 +28,13 @@ type Mutation {
 
     createLien(input: LienInput): LienProfessionnel
     deleteLien(id: ID!): Boolean
+
+    createProject(input: ProjectInput!): Project
+    submitProposal(input: ProposalInput!): Proposal
+    acceptProposal(id: ID!): Proposal
+    createReview(input: ReviewInput!): Review
+    createPayment(input: PaymentInput!): Payment
+    createUser(input: UserInput!): User
 }
 
 type Freelance {
@@ -27,8 +43,13 @@ type Freelance {
     prenom: String
     email: String
     bio: String
+    hourlyRate: Float
+    location: String
     skills: [Skill]
     liens: [LienProfessionnel]
+    proposals: [Proposal]
+    reviews: [Review]
+    user: User
 }
 
 type Skill {
@@ -45,7 +66,46 @@ type LienProfessionnel {
 type Project {
     id: ID!
     name: String!
+    description: String!
+    budget: Float!
+    status: ProjectStatus!
     startDate: DateTime!
+    client: User!
+    proposals: [Proposal]!
+    payment: Payment
+}
+
+type User {
+    id: ID!
+    username: String!
+    role: String!
+    freelanceProfile: Freelance
+    projectsPosted: [Project]
+}
+
+type Proposal {
+    id: ID!
+    message: String!
+    bidAmount: Float!
+    status: ProposalStatus!
+    project: Project!
+    freelance: Freelance!
+}
+
+type Review {
+    id: ID!
+    rating: Int!
+    comment: String!
+    project: Project!
+    freelance: Freelance!
+}
+
+type Payment {
+    id: ID!
+    amount: Float!
+    status: PaymentStatus!
+    paymentDate: DateTime!
+    project: Project!
 }
 
 input FreelanceInput {
@@ -53,6 +113,8 @@ input FreelanceInput {
     prenom: String
     email: String
     bio: String
+    hourlyRate: Float
+    location: String
     skills: [SkillInput!]
     liens: [LienInput!]
 }
@@ -64,4 +126,55 @@ input SkillInput {
 input LienInput {
     type: String!
     url: String!
+}
+
+input ProjectInput {
+    name: String!
+    description: String!
+    budget: Float!
+    clientId: ID!
+}
+
+input ProposalInput {
+    message: String!
+    bidAmount: Float!
+    projectId: ID!
+    freelanceId: ID!
+}
+
+input ReviewInput {
+    rating: Int!
+    comment: String!
+    projectId: ID!
+    freelanceId: ID!
+}
+
+input PaymentInput {
+    amount: Float!
+    projectId: ID!
+}
+
+input UserInput {
+    username: String!
+    password: String!
+    role: String!
+    freelanceProfile: FreelanceInput
+}
+
+enum ProjectStatus {
+    NEW
+    IN_PROGRESS
+    COMPLETED
+}
+
+enum ProposalStatus {
+    PENDING
+    ACCEPTED
+    REJECTED
+}
+
+enum PaymentStatus {
+    PENDING
+    COMPLETED
+    FAILED
 }

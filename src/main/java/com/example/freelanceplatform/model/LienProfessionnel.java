@@ -2,10 +2,7 @@ package com.example.freelanceplatform.model;
 
 import lombok.*;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Entity
 @Data
@@ -20,4 +17,8 @@ public class LienProfessionnel {
 
     private String type;
     private String url;
+    // In LienProfessionnel class:
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "freelance_id")
+    private Freelance freelance;
 }
